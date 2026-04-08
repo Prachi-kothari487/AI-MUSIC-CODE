@@ -3,8 +3,9 @@ title: PLM Devs AI Music Recommender
 emoji: 🎵
 colorFrom: green
 colorTo: gray
-sdk: docker
-app_port: 7860
+sdk: streamlit
+sdk_version: 1.28.0
+app_file: app.py
 pinned: true
 license: mit
 ---
