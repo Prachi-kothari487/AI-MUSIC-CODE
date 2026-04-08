@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 import sys
 import os
@@ -8,7 +8,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "AI-music-recommender
 from env import MusicEnv
 from agent import QLearningAgent
 
-app = FastAPI(title="AI Music Recommender Inference API")
+# Disable automatic redirect on trailing slash to avoid GET redirect causing 405
+app = FastAPI(title="AI Music Recommender Inference API", redirect_slashes=False)
 
 # Global env/agent state
 _env = MusicEnv()
@@ -16,24 +17,28 @@ _agent = QLearningAgent(actions=_env.get_actions(), username="inference_user")
 
 
 @app.post("/openenv/reset")
-def reset_env():
+@app.post("/openenv/reset/")
+async def reset_env():
     """Reset the environment and agent state."""
     global _env, _agent
     _env = MusicEnv()
     _agent = QLearningAgent(actions=_env.get_actions(), username="inference_user")
-    return JSONResponse(content={"status": "ok", "message": "Environment reset successfully."})
+    return JSONResponse(
+        status_code=200,
+        content={"status": "ok", "message": "Environment reset successfully."}
+    )
 
 
 @app.get("/openenv/state")
-def get_state(mood: str = "Happy", time_of_day: str = "Morning", last_genre: str = "None"):
+async def get_state(mood: str = "Happy", time_of_day: str = "Morning", last_genre: str = "None"):
     """Get the current environment state."""
     state = _env.get_state(mood, time_of_day, last_genre)
     return {"state": state}
 
 
 @app.post("/openenv/recommend")
-def recommend(mood: str = "Happy", time_of_day: str = "Morning",
-              last_genre: str = "None", language: str = "Hindi"):
+async def recommend(mood: str = "Happy", time_of_day: str = "Morning",
+                    last_genre: str = "None", language: str = "Hindi"):
     """Get song recommendations for a given mood/time/language."""
     from recommend import Recommender
     recommender = Recommender(
@@ -48,5 +53,5 @@ def recommend(mood: str = "Happy", time_of_day: str = "Morning",
 
 
 @app.get("/health")
-def health():
+async def health():
     return {"status": "healthy"}
